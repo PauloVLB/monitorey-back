@@ -11,7 +11,9 @@ const io = require('socket.io')(server,
 
 const alunos = [];
 
-io.on('connection', (socket) => { 
+io.on('connection', (socket) => {
+    socket.emit('listar', { alunos });
+
     socket.on('new-user', data => {
         alunos.push(data);
 
