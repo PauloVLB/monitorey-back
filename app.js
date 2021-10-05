@@ -15,7 +15,13 @@ io.on('connection', (socket) => {
     socket.emit('listar', { alunos });
 
     socket.on('new-user', data => {
-        alunos.push(data);
+        const newAluno = {
+            id: socket.id,
+            nome: data.nome,
+            questoes: []
+        };
+
+        alunos.push(newAluno);
 
         io.emit('listar', { alunos });
     });
