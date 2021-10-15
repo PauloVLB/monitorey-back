@@ -10,9 +10,49 @@ const io = require('socket.io')(server,
 );
 
 const alunos = [];
+const questoes = [];
+
+function questoesIguais(questaoA, questaoB) {
+    return (questaoA.capitulo === questaoB.capitulo &&
+            questaoA.numero === questaoB.numero &&
+            questaoA.tipo === questaoB.tipo);
+}
 
 io.on('connection', (socket) => {
-    socket.emit('listar', { alunos });
+    socket.emit('listar-alunos', { alunos });
+    socket.emit('listar-questoes', { questoes });
+
+    socket.on('new-doubt', data => {
+        const novaQuestao = {
+            tipo: data.tipo,
+            capitulo: data.capitulo,
+            numero: data.numero,
+            alunos: []
+        };
+
+        const questaoExiste = questoes.filter(questao => questoesIguais(questao, novaQuestao));
+
+        if(questaoExiste.length) {
+            questoes.forEach(questao => {
+                if(questoesIguais(questao, novaQuestao)) {
+                    if(!questao.alunos.includes(data.nome)) {
+                        questao.alunos.push(data.nome);
+                    }
+                }
+            });
+        } else {
+            novaQuestao.alunos.push(data.nome);
+            questoes.push(novaQuestao);
+        }
+
+        alunos.forEach(aluno => {
+            if(aluno.id === data.id) {
+                aluno.questoes.push(novaQuestao);
+            }
+        });
+
+        io.emit('listar-questoes', { questoes });
+    });
 
     socket.on('new-user', data => {
         const newAluno = {
@@ -20,15 +60,17 @@ io.on('connection', (socket) => {
             nome: data.nome,
             questoes: []
         };
+        
+        const alunoExiste = alunos.filter(aluno => aluno.nome == newAluno.nome);
+        if(!alunoExiste.length) alunos.push(newAluno);
 
-        alunos.push(newAluno);
-
-        io.emit('listar', { alunos });
+        io.emit('listar-alunos', { alunos });
+        socket.emit('listar-questoes', { questoes });
     });
 
     socket.on('delete', data => {
         alunos.splice(data.index, 1);
-        io.emit('listar', { alunos });
+        io.emit('listar-alunos', { alunos });
     });
 });
 
