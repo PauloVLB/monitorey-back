@@ -3,7 +3,7 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server, 
     {
         cors: {
-            origin: "https://localhost:3000",
+            origin: process.env.FRONT_URL,
             methods: ["GET", "POST"]
         }
     }
@@ -22,6 +22,24 @@ io.on('connection', (socket) => {
     socket.emit('listar-alunos', { alunos });
     socket.emit('listar-questoes', { questoes });
 
+    socket.on('sair-duvida', data => {
+        const questaoExiste = questoes.filter(questao => questao.alunos.includes(data.nomeAluno))[0];
+        const indexQuestaoExiste = questoes.indexOf(questaoExiste);
+
+        if(questaoExiste) {
+            const indexAluno = questaoExiste.alunos.indexOf(data.nomeAluno); 
+            questaoExiste.alunos.splice(indexAluno, 1);
+
+            if(questaoExiste.alunos.length) {
+                questoes[indexQuestaoExiste] = questaoExiste;
+            } else {
+                questoes.splice(indexQuestaoExiste, 1);
+            }
+
+            io.emit('listar-questoes', { questoes });
+        }
+    });
+
     socket.on('new-doubt', data => {
         const novaQuestao = {
             tipo: data.tipo,
@@ -31,7 +49,7 @@ io.on('connection', (socket) => {
         };
 
         const questaoExiste = questoes.filter(questao => questoesIguais(questao, novaQuestao));
-
+        
         if(questaoExiste.length) {
             questoes.forEach(questao => {
                 if(questoesIguais(questao, novaQuestao)) {
