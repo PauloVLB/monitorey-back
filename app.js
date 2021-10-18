@@ -12,8 +12,6 @@ function questoesIguais(questaoA, questaoB) {
 }
 
 io.on('connection', (socket) => {
-    console.log(socket.id);
-    
     socket.emit('listar-alunos', { alunos });
     socket.emit('listar-questoes', { questoes });
 
@@ -87,4 +85,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 8000);
